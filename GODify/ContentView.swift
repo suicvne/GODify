@@ -1,5 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import Combine
 
 struct ContentView: View {
 
@@ -16,12 +17,20 @@ struct ContentView: View {
     var body: some View {
         
         VStack(alignment: .leading, spacing: 12) {
+            
+            // VStack list of ISOs to process.
             VStack(alignment: .leading, spacing: 6) {
                 Text("ISOs").font(.headline)
                 List {
-                    ForEach(isoItems) { item in
+                    ForEach(isoItems.indices, id: \.self) { idx in
+                        let item = isoItems[idx];
                         HStack {
-                            Text(item.url.lastPathComponent)
+                            ISORowView(
+                                item: isoItems[idx],
+                                index: idx,
+                                currentIndex:   $currentIndex,
+                                isRunning:      $isRunning
+                            ).id("\(item.id)-\(isRunning)-\(currentIndex)");
                             Spacer()
                             Button("Remove") {
                                 remove(item)
@@ -36,6 +45,7 @@ struct ContentView: View {
                 .disabled(isRunning)
             }.padding()
 
+            // Progress indicator for a specific item running.
             ProgressView(
                 value: Double(curProgressValue),
                 total: Double(max(curTotalProgressValue, 1))
@@ -43,36 +53,36 @@ struct ContentView: View {
             .padding(.horizontal)
             .disabled(!isRunning)
 
+            // Scrolling view for logging text coming in from iso2god.
             ScrollViewReader { proxy in
                 ScrollView {
-                    Text(logText)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .font(.system(.body, design: .monospaced))
-                        .padding()
-                    
-                    // Hack
-                    Color.clear.frame(height: 1).id("BOTTOM")
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(logText)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .font(.system(.body, design: .monospaced))
+                            .padding()
+                        
+                        // Hack
+                        Color.clear.frame(height: 1).id("BOTTOM")
+                    }
                 }
                 .background(Color.black.opacity(0.05))
                 .frame(height: 200)
-                .onChange(of: logText) {
-                    withAnimation {
+                .onChange(of: logText) { _ in
+                    withAnimation(.easeOut(duration: 0.2)) {
                         proxy.scrollTo("BOTTOM", anchor: .bottom)
                     }
                 }
             }
 
+            // HStack for selecting or opening the output directory.
             HStack {
-
                 Text("Output:")
                     .bold()
-
                 Text(outputDirectory.path)
                     .lineLimit(1)
                     .truncationMode(.middle)
-
                 Spacer()
-
                 Button("Change") {
                     chooseOutputFolder()
                 }.disabled(isRunning)
@@ -82,8 +92,8 @@ struct ContentView: View {
             }
             .padding(.horizontal)
             
+            // HStack for primary controls: Add ISOs, Clear, Start.
             HStack {
-
                 Button("Add ISO(s)") {
                     openPicker()
                 }.disabled(isRunning)
@@ -106,12 +116,13 @@ struct ContentView: View {
         .background(WindowAdapter())
     }
 
+    // removes an ISOItem from the last matching the given item's ID.
     func remove(_ item: ISOItem) {
         isoItems.removeAll { $0.id == item.id }
     }
 
+    // open the file picker for ISOs.
     func openPicker() {
-
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.diskImage]
         panel.allowsMultipleSelection = true
@@ -123,6 +134,7 @@ struct ContentView: View {
         }
     }
     
+    // open folder picker for output directory.
     func chooseOutputFolder() {
         let panel = NSOpenPanel()
         panel.canChooseFiles = false
@@ -136,12 +148,13 @@ struct ContentView: View {
         }
     }
     
+    // open the output folder in Finder/other
     func openOutputFolder() {
         NSWorkspace.shared.open(outputDirectory);
     }
 
+    // drop handler so the app can accept dropped ISOs
     func handleDrop(_ providers: [NSItemProvider]) -> Bool {
-
         for provider in providers {
             provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
 
@@ -159,6 +172,7 @@ struct ContentView: View {
         return true
     }
 
+    // start button press - starts processing the list of ISOs
     func startProcessing() {
         // Set state
         isRunning = true
@@ -176,6 +190,7 @@ struct ContentView: View {
         runNext()
     }
     
+    // parses new logs coming in for process updates.
     func parsePartLog(line: String) -> (Int, Int) {
         var current = -1;
         var total = -1;
@@ -194,8 +209,8 @@ struct ContentView: View {
         return (current, total);
     }
 
+    // runs the next item to be processed.
     func runNext() {
-
         guard currentIndex < isoItems.count else {
             logText.append("\nAll conversions finished.\n")
             isRunning = false
