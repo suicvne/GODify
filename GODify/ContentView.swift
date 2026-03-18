@@ -82,6 +82,7 @@ struct ContentView: View {
                 Text(outputDirectory.path)
                     .lineLimit(1)
                     .truncationMode(.middle)
+                
                 Spacer()
                 Button("Change") {
                     chooseOutputFolder()

@@ -14,7 +14,8 @@ struct GODifyApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     var body: some Scene {
-        Window("GODify", id: "main") {
+//        Window("GODify", id: "main") {
+        WindowGroup("GODify") {
             ContentView()
         }
     }

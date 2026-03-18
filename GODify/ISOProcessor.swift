@@ -23,6 +23,10 @@ class ISOProcessor {
         return Bundle.main.url(forResource: name, withExtension: nil);
     }
     
+    static func coreCount() -> Int {
+        return ProcessInfo.processInfo.processorCount;
+    }
+    
     /**
      Processes a single ISO, putting the converted Game On Demand into the specified output folder.
      */
@@ -40,12 +44,13 @@ class ISOProcessor {
         // Setup process
         let process = Process()
         let pipe = Pipe()
+        let cores = coreCount()
 
         process.standardOutput = pipe
         process.standardError = pipe
 
         process.executableURL = iso2godPath
-        process.arguments = [ url.path, outputDir.path ]
+        process.arguments = [ url.path, outputDir.path, "-j\(cores)" ]
 
         // Setup stdout/stderr handle pipe.
         // WHAT THIS MEANS: When data is available to be read on the pipe,
@@ -71,7 +76,9 @@ class ISOProcessor {
             }
         }
 
+        // Run, catch errors.
         do {
+            logHandler("\(cores) cores\n")
             try process.run()
         } catch {
             logHandler("Failed to run iso2god: \(error)\n")
