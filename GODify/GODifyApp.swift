@@ -14,9 +14,14 @@ struct GODifyApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     var body: some Scene {
-//        Window("GODify", id: "main") {
         WindowGroup("GODify") {
             ContentView()
+        }
+        .commands {
+            CommandGroup(replacing: .newItem) {
+                Button("New GODify Window") { }
+                .disabled(true).keyboardShortcut("n")
+            }
         }
     }
 }

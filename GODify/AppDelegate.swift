@@ -17,6 +17,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return !checkJobRunning();
     }
     
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+        if !hasVisibleWindows {
+            sender.windows.first?.makeKeyAndOrderFront(nil)
+        }
+        return true;
+    }
+    
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        NSWindow.allowsAutomaticWindowTabbing = false
+    }
+    
     // So we don't quit in the middle of shit going.
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         let Response: NSApplication.TerminateReply = !checkJobRunning() || SharedAppState.shared.isTerminating ? .terminateNow : .terminateLater
