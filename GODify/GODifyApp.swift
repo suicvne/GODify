@@ -11,7 +11,7 @@ import SwiftUI
 struct GODifyApp: App {
     
     // Use custom app delegate so we can close when last window is closed.
-    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @NSApplicationDelegateAdaptor(GODifyAppDelegate.self) var appDelegate
     
     var body: some Scene {
         WindowGroup("GODify") {

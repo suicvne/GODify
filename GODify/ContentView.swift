@@ -124,9 +124,15 @@ struct ContentView: View {
 
     // open the file picker for ISOs.
     func openPicker() {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.diskImage]
-        panel.allowsMultipleSelection = true
+        
+        guard
+            let IsoType =
+                UTType(filenameExtension: "iso", conformingTo: .diskImage)
+        else { assert(false) }
+        
+        let panel = NSOpenPanel();
+        panel.allowedContentTypes = [ IsoType ];
+        panel.allowsMultipleSelection = true;
 
         if panel.runModal() == .OK {
             for url in panel.urls {
@@ -156,9 +162,11 @@ struct ContentView: View {
 
     // drop handler so the app can accept dropped ISOs
     func handleDrop(_ providers: [NSItemProvider]) -> Bool {
+        // providers are just fancy names for "stuff"
+        // in this case we're trying to grab it as a file URL
         for provider in providers {
+            // for a provider, try to load an item of type "UTType.fileURL". Aka, a file.
             provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
-
                 guard
                     let data = item as? Data,
                     let url = URL(dataRepresentation: data, relativeTo: nil)
@@ -196,6 +204,7 @@ struct ContentView: View {
         var current = -1;
         var total = -1;
         
+        // iso2god-rs is not translated so this should be fine.
         if line.contains("writing part files:") {
             let numbers = line.components(separatedBy: ":")[1]
                 .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -230,8 +239,8 @@ struct ContentView: View {
                 
                 let Outputs = parsePartLog(line: output);
                 if(Outputs.0 != -1 && Outputs.1 != -1) {
-                    curProgressValue = Outputs.0;
                     curTotalProgressValue = Outputs.1;
+                    curProgressValue = Outputs.0;
                 }
                 
                 logText.append(output)

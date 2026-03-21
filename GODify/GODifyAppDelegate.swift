@@ -8,7 +8,7 @@
 
 import AppKit
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class GODifyAppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return true
     }
@@ -35,7 +35,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func checkJobRunning() -> Bool {
-        if SharedAppState.shared.isRunning {
+        // Only show this dialog if:
+        //   - A job is running
+        //   - A prior dialog has NOT set "isTerminating" to true.
+        if SharedAppState.shared.isRunning &&
+            !SharedAppState.shared.isTerminating
+        {
             let alert = NSAlert()
             alert.messageText = "Conversion in progress"
             alert.informativeText = "A conversion is currently running. Are you sure you want to quit?"
