@@ -142,7 +142,7 @@ struct ContentView: View {
 
         if panel.runModal() == .OK {
             for url in panel.urls {
-                isoItems.append(ISOItem(url: url))
+                _ = addIsoToList(inIsoUrl: url);
             }
         }
     }
@@ -179,12 +179,25 @@ struct ContentView: View {
                 else { return }
 
                 DispatchQueue.main.async {
-                    isoItems.append(ISOItem(url: url))
+                    _ = addIsoToList(inIsoUrl: url);
                 }
             }
         }
 
         return true
+    }
+    
+    func addIsoToList(inIsoUrl: URL) -> Bool {
+        let existing = isoItems.first(where: { a in
+            return a.url == inIsoUrl;
+        });
+        
+        if existing != nil {
+            return false;
+        }
+        
+        isoItems.append(ISOItem(url: inIsoUrl));
+        return true;
     }
 
     // start button press - starts processing the list of ISOs
