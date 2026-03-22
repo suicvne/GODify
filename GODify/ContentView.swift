@@ -8,8 +8,9 @@ struct ContentView: View {
     @State private var logText: String = ""
     @State private var isRunning = false
     @State private var currentIndex = 0
-    @State private var outputDirectory: URL = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent("GODified")
+    @State private var outputDirectory: URL =
+            FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("GODified")
     
     @State private var curProgressValue = 0;
     @State private var curTotalProgressValue = 0;
