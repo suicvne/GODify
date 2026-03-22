@@ -13,6 +13,9 @@ struct ContentView: View {
     
     @State private var curProgressValue = 0;
     @State private var curTotalProgressValue = 0;
+    
+    private let IsoItemType: UTType =
+        UTType(filenameExtension: "iso", conformingTo: .diskImage)!
 
     var body: some View {
         
@@ -23,16 +26,15 @@ struct ContentView: View {
                 Text("ISOs").font(.headline)
                 List {
                     ForEach(isoItems.indices, id: \.self) { idx in
-                        let item = isoItems[idx];
                         HStack {
                             ISORowView(
-                                item: $isoItems[idx],
+                                item:           $isoItems[idx],
                                 currentIndex:   $currentIndex,
                                 isRunning:      $isRunning,
-                            ).id("\(item.id)-\(isRunning)-\(currentIndex)");
+                            ).id("\($isoItems[idx].id)-\(isRunning)-\(currentIndex)");
                             Spacer()
                             Button {
-                                remove(item)
+                                remove(isoItems[idx])
                             } label: {
                                 Image(systemName: "xmark.square.fill")
                                     .resizable()
@@ -130,14 +132,8 @@ struct ContentView: View {
 
     // open the file picker for ISOs.
     func openPicker() {
-        
-        guard
-            let IsoType =
-                UTType(filenameExtension: "iso", conformingTo: .diskImage)
-        else { assert(false) }
-        
         let panel = NSOpenPanel();
-        panel.allowedContentTypes = [ IsoType ];
+        panel.allowedContentTypes = [ IsoItemType ];
         panel.allowsMultipleSelection = true;
 
         if panel.runModal() == .OK {
@@ -173,11 +169,20 @@ struct ContentView: View {
         for provider in providers {
             // for a provider, try to load an item of type "UTType.fileURL". Aka, a file.
             provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
+                // guard loading the information for the drop.
                 guard
                     let data = item as? Data,
                     let url = URL(dataRepresentation: data, relativeTo: nil)
                 else { return }
+                
+                // Validate that we actually dropped an ISO
+                let DroppedType = UTType(filenameExtension: url.pathExtension)!;
+                if !DroppedType.conforms(to: IsoItemType) {
+                    return
+                }
 
+                // if we made it this far,
+                // dispatch to main queue that we want to add it
                 DispatchQueue.main.async {
                     _ = addIsoToList(inIsoUrl: url);
                 }
