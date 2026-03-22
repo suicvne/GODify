@@ -11,6 +11,7 @@ enum ProgressIndicatorState {
     case Inactive
     case Running
     case Complete
+    case Error
 }
 
 // Represents a project indicator, sitting somewhere, that transitions from:
@@ -23,17 +24,21 @@ struct ProgressIndicator: View {
     var body: some View {
         switch(CurrentState) {
         case .Inactive:
-            ProgressView()
-                .progressViewStyle(CircularProgressViewStyle())
-                .controlSize(.small)
-                .opacity(0.0)
+            Image(systemName: "circle.dashed")
+                .help("Queued")
         case .Running:
             ProgressView()
                 .progressViewStyle(CircularProgressViewStyle())
                 .controlSize(.small)
+                .help("Converting..")
         case .Complete:
             Image(systemName: "checkmark.circle")
                 .foregroundColor(.green)
+                .help("Completed")
+        case .Error:
+            Image(systemName: "x.circle")
+                .foregroundColor(.red)
+                .help("Errored")
         }
     }
 }

@@ -9,18 +9,19 @@ import SwiftUI
 
 // represents a single row in the list of ISOs to convert.
 struct ISORowView: View {
-    let item: ISOItem
-    let index: Int
+    @Binding var item: ISOItem
     @Binding var currentIndex: Int
     @Binding var isRunning: Bool
     
     var IndicatorState: ProgressIndicatorState {
-        if index < currentIndex {
-            return .Complete
-        } else if index == currentIndex && isRunning {
+        if item.isComplete && !item.isErrored {
+            return .Complete;
+        } else if isRunning {
             return .Running;
+        } else if item.isErrored {
+            return .Error;
         } else {
-            return .Inactive
+            return .Inactive;
         }
     }
     

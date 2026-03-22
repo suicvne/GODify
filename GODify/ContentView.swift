@@ -26,15 +26,21 @@ struct ContentView: View {
                         let item = isoItems[idx];
                         HStack {
                             ISORowView(
-                                item: isoItems[idx],
-                                index: idx,
+                                item: $isoItems[idx],
                                 currentIndex:   $currentIndex,
-                                isRunning:      $isRunning
+                                isRunning:      $isRunning,
                             ).id("\(item.id)-\(isRunning)-\(currentIndex)");
                             Spacer()
-                            Button("Remove") {
+                            Button {
                                 remove(item)
+                            } label: {
+                                Image(systemName: "xmark.square.fill")
+                                    .resizable()
+                                    .frame(width: 16, height: 16)
+                                    .foregroundColor(.red)
                             }
+                            .buttonStyle(.plain)
+                            .help("Remove Item")
                         }
                     }
                 }
@@ -216,6 +222,11 @@ struct ContentView: View {
             }
         }
         
+        if line.contains("Error") {
+            isoItems[currentIndex].isErrored = true;
+            isoItems[currentIndex].isComplete = false;
+        }
+        
         return (current, total);
     }
 
@@ -225,7 +236,7 @@ struct ContentView: View {
             logText.append("\nAll conversions finished.\n")
             isRunning = false
             SharedAppState.shared.isRunning = false;
-            return
+            return;
         }
 
         let item = isoItems[currentIndex]
@@ -236,7 +247,6 @@ struct ContentView: View {
             url: item.url,
             outputDir: outputDirectory,
             logHandler: { output in
-                
                 let Outputs = parsePartLog(line: output);
                 if(Outputs.0 != -1 && Outputs.1 != -1) {
                     curTotalProgressValue = Outputs.1;
@@ -246,6 +256,8 @@ struct ContentView: View {
                 logText.append(output)
             },
             completion: {
+                isoItems[currentIndex].isComplete = true &&
+                    !isoItems[currentIndex].isErrored;
                 currentIndex += 1
                 runNext()
             }
