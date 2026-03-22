@@ -233,8 +233,9 @@ struct ContentView: View {
     // runs the next item to be processed.
     func runNext() {
         guard currentIndex < isoItems.count else {
-            logText.append("\nAll conversions finished.\n")
-            isRunning = false
+            logText.append("\nAll conversions finished.\n");
+            isRunning = false;
+            currentIndex = 0;
             SharedAppState.shared.isRunning = false;
             return;
         }
