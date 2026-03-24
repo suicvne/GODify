@@ -29,6 +29,7 @@ struct ISORowView: View {
         HStack {
             ProgressIndicator(CurrentState: self.IndicatorState)
             Text(item.url.lastPathComponent)
+                .help(item.url.path)
         }
     }
 }
