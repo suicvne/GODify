@@ -14,6 +14,7 @@ struct ContentView: View {
     
     @State private var curProgressValue = 0;
     @State private var curTotalProgressValue = 0;
+    @State private var showDetails = false;
     
     private let IsoItemType: UTType =
         UTType(filenameExtension: "iso", conformingTo: .diskImage)!
@@ -29,10 +30,14 @@ struct ContentView: View {
                     ForEach(isoItems.indices, id: \.self) { idx in
                         HStack {
                             ISORowView(
-                                item:           $isoItems[idx],
-                                currentIndex:   $currentIndex,
+                                currentIndex:   $currentIndex, /* bind app's current index we're processing */
+                                rowIndex:       idx,           /* bind the index that represents **this** row. */
                                 isRunning:      $isRunning,
-                            ).id("\($isoItems[idx].id)-\(isRunning)-\(currentIndex)");
+                                
+                                IsoURL:         isoItems[idx].url,
+                                isComplete:     $isoItems[idx].isComplete,
+                                isErrored:      $isoItems[idx].isErrored
+                            ).id("\($isoItems[idx].id)-\(isRunning)-\(idx)-\(currentIndex)");
                             Spacer()
                             Button {
                                 remove(isoItems[idx])
@@ -53,35 +58,57 @@ struct ContentView: View {
                 }
                 .disabled(isRunning)
             }.padding()
-
-            // Progress indicator for a specific item running.
-            ProgressView(
-                value: Double(curProgressValue),
-                total: Double(max(curTotalProgressValue, 1))
-            )
+            
+            // Expansion for details.
+            HStack {
+                Button {
+                    withAnimation(.easeInOut) { showDetails.toggle() }
+                } label: {
+                    Image(systemName: "chevron.right")
+                        .rotationEffect(.degrees(showDetails ? 90 : 0))
+                        .animation(.easeInOut(duration: 0.2), value: showDetails)
+                        .help(showDetails ? "Hide Details" : "Show Details")
+                        .frame(maxWidth: 16, maxHeight: 16)
+                }
+                .padding(.horizontal)
+                .frame(maxWidth: 16, maxHeight: 16)
+            }
             .padding(.horizontal)
-            .disabled(!isRunning)
-
-            // Scrolling view for logging text coming in from iso2god.
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(logText)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .font(.system(.body, design: .monospaced))
-                            .padding()
-                        
-                        // Hack
-                        Color.clear.frame(height: 1).id("BOTTOM")
+            
+            if showDetails {
+                VStack(spacing: 12) {
+                    // Progress indicator for a specific item running.
+                    ProgressView(
+                        value: Double(curProgressValue),
+                        total: Double(max(curTotalProgressValue, 1))
+                    )
+                    .padding(.horizontal)
+                    .disabled(!isRunning)
+                    
+                    // Scrolling view for logging text coming in from iso2god.
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text(logText)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .font(.system(.body, design: .monospaced))
+                                    .padding()
+                                
+                                // Hack
+                                Color.clear.frame(height: 1).id("BOTTOM")
+                            }
+                        }
+                        .background(Color.black.opacity(0.05))
+                        .frame(idealHeight: 200)
+                        .onChange(of: logText) { _ in
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                proxy.scrollTo("BOTTOM", anchor: .bottom)
+                            }
+                        }
                     }
                 }
-                .background(Color.black.opacity(0.05))
-                .frame(height: 200)
-                .onChange(of: logText) { _ in
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        proxy.scrollTo("BOTTOM", anchor: .bottom)
-                    }
-                }
+                .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity),
+                                        removal:   .move(edge: .bottom).combined(with: .opacity)))
             }
 
             // HStack for selecting or opening the output directory.
@@ -122,7 +149,10 @@ struct ContentView: View {
             .padding()
         }
         .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .frame(maxWidth: .infinity,
+               maxHeight: .infinity,
+               alignment: .top
+        )
         .background(WindowAdapter())
     }
 

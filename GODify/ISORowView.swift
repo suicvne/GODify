@@ -9,16 +9,22 @@ import SwiftUI
 
 // represents a single row in the list of ISOs to convert.
 struct ISORowView: View {
-    @Binding var item: ISOItem
-    @Binding var currentIndex: Int
-    @Binding var isRunning: Bool
+    @Binding var currentIndex: Int;
+             let rowIndex: Int;
+    @Binding var isRunning: Bool;
+    
+    // New:
+               let IsoURL: URL;
+    @Binding   var isComplete: Bool;
+    @Binding   var isErrored: Bool;
     
     var IndicatorState: ProgressIndicatorState {
-        if item.isComplete && !item.isErrored {
+        if isComplete && !isErrored {
             return .Complete;
-        } else if isRunning {
+        } else if isRunning &&
+                  currentIndex == rowIndex {
             return .Running;
-        } else if item.isErrored {
+        } else if isErrored {
             return .Error;
         } else {
             return .Inactive;
@@ -28,8 +34,8 @@ struct ISORowView: View {
     var body: some View {
         HStack {
             ProgressIndicator(CurrentState: self.IndicatorState)
-            Text(item.url.lastPathComponent)
-                .help(item.url.path)
+            Text(IsoURL.lastPathComponent) // Main text shows file name
+                .help(IsoURL.path)         // tooltip shows full
         }
     }
 }
